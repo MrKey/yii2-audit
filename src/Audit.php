@@ -415,7 +415,7 @@ class Audit extends Module
      */
     public static function findPanelIdentifier($className)
     {
-        $audit = Audit::getInstance();
+        $audit = static::getInstance();
         foreach ($audit->panels as $panel) {
             if ($panel->className() == $className) {
                 return $panel->id;

@@ -141,7 +141,18 @@ class AuditEntry extends ActiveRecord
             'created' => date('Y-m-d H:i:s'),
             'data' => [Helper::serialize($data, $compact), \PDO::PARAM_LOB],
         ];
-        static::getDb()->createCommand()->insert(AuditData::tableName(), $record)->execute();
+
+        $sql = 'INSERT INTO ' . AuditData::tableName() . ' ("entry_id", "type", "created", "data") VALUES (:entry_id, :type, :created, EMPTY_BLOB()) RETURNING "data" INTO :data';
+        $record['data'][0] = fopen('data:text/plain;base64,' . base64_encode($record['data'][0]), 'rb');
+
+        $transaction = static::getDb()->beginTransaction();
+        // $result = static::getDb()->createCommand()->insert(AuditData::tableName(), $record)->execute();
+        $result = static::getDb()->createCommand($sql, $record)->execute();
+        if ($result === false) {
+            $transaction->rollBack();
+        } else {
+            $transaction->commit();
+        }
     }
 
     /**
